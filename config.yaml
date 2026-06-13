@@ -1,0 +1,65 @@
+# Jarvis configuration (non-secret). Secrets (API keys) go in .env only.
+
+providers:
+  # Always-available local fallback. Pulled by bootstrap.sh.
+  local_fallback: ollama/llama3.1
+
+  # Per-task model tiers. The router walks each list top->bottom, skipping any
+  # model whose provider key is missing, always ending at a reachable Ollama.
+  # NOTE: `claude-code/*` routes through the `claude` CLI using your Claude
+  # Max/Pro SUBSCRIPTION (OAuth) — no API key, no per-token billing. `claude-*`
+  # (no prefix) instead uses the paid Anthropic API via LiteLLM.
+  tiers:
+    # Order = preference. API models (claude-*, no prefix) come FIRST: when an
+    # ANTHROPIC_API_KEY is set they give NATIVE function-calling = one fast call
+    # per tool turn (~2-3s vs ~15s). With no key they're auto-pruned and it falls
+    # back to claude-code/* (your Max plan, slower but free), then local Ollama.
+    routing:
+      - claude-3-5-haiku-latest    # API (fast) — used only if key set
+      - claude-code/haiku          # Max plan fallback
+      - ollama/llama3.1
+    chat:
+      - claude-3-5-haiku-latest    # API (fast)
+      - claude-code/haiku          # Max plan
+      - claude-code/sonnet
+      - ollama/llama3.1
+    coding:
+      - claude-sonnet-4-6          # API (fast, native tools)
+      - claude-code/sonnet         # Max plan
+      - ollama/qwen2.5-coder
+    hacking:
+      - claude-sonnet-4-6          # API (fast, native tools)
+      - claude-code/sonnet         # Max plan
+      - ollama/llama3.1
+
+  # Optional explicit aliases (litellm model_list form). Leave empty to use the
+  # tier strings directly.
+  model_list: []
+
+autonomy:
+  # autonomous = chain tasks end-to-end. approval = ask before dangerous skills.
+  mode: autonomous
+  # These are gated even in autonomous mode (hard stop on the genuinely
+  # destructive or irreversible). Remove `trade.order` ONLY if you truly want
+  # Jarvis to place real broker orders unattended.
+  approval_required_for:
+    - shell.destructive
+    - net.send
+    - trade.order
+
+skills:
+  mcp_config: ~/.claude.json       # reuse the host's MCP servers
+
+voice:
+  enabled: true
+  wake_word: jarvis
+  stt_model: base.en               # faster-whisper model size
+  tts_voice: en-GB-RyanNeural      # natural British neural voice (Jarvis-style)
+  tts_rate: "+8%"                  # slightly brisk = more natural
+  tts_pitch: "+0Hz"
+  clap_to_wake: true               # respond to a clap as well as the wake word
+  clap_count: 2                    # claps required (2 = robust against noise)
+
+web:
+  host: 127.0.0.1
+  port: 8787

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jarvis</title>
+<style>
+  :root { --bg:#0b0f14; --panel:#121a24; --accent:#33d6ff; --text:#dce6f0; --dim:#7790a8; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:ui-monospace,Menlo,Consolas,monospace; background:var(--bg); color:var(--text); }
+  header { padding:14px 20px; border-bottom:1px solid #1d2a38; display:flex; gap:14px; align-items:center; }
+  header h1 { font-size:18px; margin:0; color:var(--accent); letter-spacing:2px; }
+  #status { color:var(--dim); font-size:12px; }
+  #log { padding:20px; height:calc(100vh - 150px); overflow:auto; }
+  .msg { margin:0 0 16px; max-width:820px; }
+  .you { color:#8fe; } .bot { color:var(--text); }
+  .meta { color:var(--dim); font-size:11px; margin-bottom:4px; }
+  .steps { color:var(--dim); font-size:11px; }
+  footer { position:fixed; bottom:0; left:0; right:0; padding:14px 20px; background:var(--panel); display:flex; gap:10px; }
+  input { flex:1; background:#0b1118; border:1px solid #233242; color:var(--text); padding:12px; border-radius:8px; font-family:inherit; }
+  button { background:var(--accent); border:0; color:#04222b; padding:0 20px; border-radius:8px; font-weight:bold; cursor:pointer; }
+</style>
+</head>
+<body>
+<header><h1>JARVIS</h1><span id="status">connecting…</span></header>
+<div id="log"></div>
+<footer>
+  <input id="box" placeholder="ask jarvis…" autofocus />
+  <button onclick="send()">send</button>
+</footer>
+<script>
+const log = document.getElementById('log');
+const box = document.getElementById('box');
+function add(cls, meta, text, steps) {
+  const d = document.createElement('div'); d.className = 'msg ' + cls;
+  let s = steps && steps.length ? `<div class="steps">${steps.map(x=>'· '+x.skill).join('  ')}</div>` : '';
+  d.innerHTML = `<div class="meta">${meta}</div>${s}<div>${text.replace(/</g,'&lt;')}</div>`;
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+}
+async function health(){
+  try { const r = await fetch('/api/health'); const j = await r.json();
+    const p = j.capabilities.cloud_providers; const prov = (p && p.length) ? p.join(', ') : (j.capabilities.ollama ? 'ollama' : 'none');
+    document.getElementById('status').textContent = `providers: ${prov} · skills: ${j.skills.total}`;
+  } catch(e){ document.getElementById('status').textContent = 'offline'; }
+}
+async function send(){
+  const text = box.value.trim(); if(!text) return; box.value='';
+  add('you','you', text);
+  add('bot','jarvis','…thinking');
+  const placeholder = log.lastChild;
+  try {
+    const r = await fetch('/api/ask', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+    const j = await r.json(); placeholder.remove();
+    add('bot', `jarvis · ${j.agent} · ${j.model}`, j.error || j.text, j.steps);
+  } catch(e){ placeholder.remove(); add('bot','jarvis','error: '+e); }
+}
+box.addEventListener('keydown', e => { if(e.key==='Enter') send(); });
+health();
+</script>
+</body>
+</html>

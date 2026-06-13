@@ -1,0 +1,27 @@
+services:
+  jarvis:
+    build: .
+    ports:
+      - "8787:8787"
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - jarvis_home:/root/.jarvis
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+    # Pull a model once: docker compose exec ollama ollama pull llama3.1
+
+volumes:
+  jarvis_home:
+  ollama_models:
