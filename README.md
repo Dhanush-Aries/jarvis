@@ -1,3 +1,22 @@
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=220&color=0:0d47a1,30:00ff41,70:00ffff,100:ff006e&text=JARVIS&fontSize=82&fontColor=ffffff&animation=fadeIn&desc=Multi-Provider+%C2%B7+Multi-Interface+%C2%B7+Zero-API-Key+AI+Assistant&descAlignY=80&descSize=16" width="100%" alt="Jarvis"/>
+</div>
+
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python_3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Anthropic](https://img.shields.io/badge/Claude_Max-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
+![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge&logo=ollama&logoColor=white)
+![Whisper](https://img.shields.io/badge/Whisper-412991?style=for-the-badge&logo=openai&logoColor=white)
+![MCP](https://img.shields.io/badge/MCP-0a0a0a?style=for-the-badge&logo=anthropic&logoColor=00ff41)
+![License](https://img.shields.io/badge/License-MIT-00ff41?style=for-the-badge)
+
+**One AI core. Four interfaces. Six LLM providers. Zero API keys required.**
+
+</div>
+
+---
+
 # Jarvis
 
 A portable, multi-provider, multi-interface autonomous AI assistant — your
