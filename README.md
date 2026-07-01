@@ -1,84 +1,51 @@
-<div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&height=220&color=0:0d47a1,30:00ff41,70:00ffff,100:ff006e&text=JARVIS&fontSize=82&fontColor=ffffff&animation=fadeIn&desc=Multi-Provider+%C2%B7+Multi-Interface+%C2%B7+Zero-API-Key+AI+Assistant&descAlignY=80&descSize=16" width="100%" alt="Jarvis"/>
-</div>
+# Jarvis — Zero-API-Key Autonomous AI Assistant
 
-<div align="center">
+> **One core. Four interfaces. Six LLM providers. Runs on your Claude Max subscription — no API key required.**
 
-![Python](https://img.shields.io/badge/Python_3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Anthropic](https://img.shields.io/badge/Claude_Max-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
-![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge&logo=ollama&logoColor=white)
-![Whisper](https://img.shields.io/badge/Whisper-412991?style=for-the-badge&logo=openai&logoColor=white)
-![MCP](https://img.shields.io/badge/MCP-0a0a0a?style=for-the-badge&logo=anthropic&logoColor=00ff41)
-![License](https://img.shields.io/badge/License-MIT-00ff41?style=for-the-badge)
+<p align="center"><img src="assets/hero.gif" alt="Jarvis wake-word demo" width="720"></p>
 
-**One AI core. Four interfaces. Six LLM providers. Zero API keys required.**
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/Danush-Aries/jarvis/ci.yml?branch=main&style=flat-square" alt="build">
+  <img src="https://img.shields.io/badge/license-MIT-00ff41?style=flat-square" alt="license">
+  <img src="https://img.shields.io/badge/made%20with-Python%203.11%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="python">
+  <img src="https://img.shields.io/badge/Claude%20Max-supported-D97757?style=flat-square&logo=anthropic&logoColor=white" alt="claude">
+  <img src="https://img.shields.io/badge/Ollama-fallback-000000?style=flat-square&logo=ollama&logoColor=white" alt="ollama">
+</p>
 
-</div>
+## Why this exists
 
----
+Every "AI assistant" project I tried either burned my API budget in a weekend or locked me into one provider. Jarvis routes every task through whichever LLM is actually reachable — starting with your `claude` CLI (Claude Max/Pro OAuth, no API key), falling through Anthropic/OpenAI/Groq/Gemini/DeepSeek if keys exist, and always ending at a local Ollama fallback. It also has hands: OpenClaw drives the desktop, Hermes chains desktop+browser+shell to finish real tasks, and the voice loop wakes on "hey jarvis" with sub-second latency.
 
-# Jarvis
+## Try it in 60 seconds
 
-A portable, multi-provider, multi-interface autonomous AI assistant — your
-"Avengers Jarvis". One core kernel; four ways to talk to it (terminal, web,
-voice, daemon); every LLM provider behind a single router; works on **any
-environment** — including with **zero API keys**, running on a **Claude Max/Pro
-subscription** (via the `claude` CLI) or a **local Ollama** fallback.
-
-## What it does
-- **Runs on your Claude subscription** — no API key, no per-token billing.
-  Models prefixed `claude-code/*` shell out to the `claude` CLI and use your
-  Claude Max/Pro OAuth login. This is the default in `config.yaml`.
-- **Talks** — optional "hey jarvis" voice loop (wake word → whisper STT → reply
-  → neural TTS).
-- **Codes** — an engineering agent that reads, writes, and runs code.
-- **Hacks** — an authorised-pentest agent wired to your MCP security tools.
-- **Drives the desktop** — OpenClaw gives Jarvis hands on the PC: launch apps,
-  open files/URLs, type, hotkeys, screenshots, clipboard, browser. Fine in-page
-  browser control via Playwright MCP.
-- **Automates anything, end to end** — Hermes is an autonomous operator that
-  chains desktop + browser + shell + code together to finish a goal.
-- **Any provider** — Anthropic, OpenAI, Groq, Gemini, DeepSeek, Ollama… auto-
-  detected; missing keys are skipped; Ollama is always the last-resort fallback.
-
-## Quick start
 ```bash
 cd ~/jarvis
-./bootstrap.sh            # core only      (or: ./bootstrap.sh all)
+./bootstrap.sh                # or: ./bootstrap.sh all  (voice + web + daemon)
 source .venv/bin/activate
-jarvis doctor            # what's available on this machine
-jarvis chat              # talk to it
+jarvis doctor                 # what's live on this box
+jarvis chat                   # terminal chat
+jarvis ask --agent hermes "open my email and summarise the top 3"
+jarvis voice                  # "hey jarvis, ..."
 ```
-No API keys? If you're logged into the `claude` CLI (Max/Pro plan) it just
-works — `config.yaml` defaults every tier to `claude-code/sonnet`. No subscription
-either? Install Ollama (`ollama pull llama3.1`) and it falls back to local. Have
-API keys? Put any subset in `.env` and the router can prefer them.
 
-## Providers & the Claude Max story
-The router walks each task tier top-to-bottom, skipping any model whose backend
-is unavailable, and always ends at a reachable Ollama.
+No `ANTHROPIC_API_KEY`? If you're logged into `claude` (Max/Pro), it just works — every task tier defaults to `claude-code/sonnet`. No subscription either? `ollama pull llama3.1` and it falls back locally.
 
-- **`claude-code/*`** (e.g. `claude-code/sonnet`, `claude-code/haiku`) — routes
-  through the `claude` CLI using your **Claude Max/Pro subscription** (OAuth, no
-  API key). Plain completions run as:
-  ```
-  claude -p --output-format json --strict-mcp-config --setting-sources user
-  ```
-  The last two flags are essential for speed: without them every call loads
-  ~20 MCP servers plus the project `CLAUDE.md` (minutes per call instead of ~4s).
-- **`claude-*`** (no prefix, e.g. `claude-sonnet-4-6`) — the paid **Anthropic
-  API** via LiteLLM, used only if `ANTHROPIC_API_KEY` is set.
-- **Everything else** (`openai/*`, `groq/*`, `gemini/*`, `deepseek/*`, …) — via
-  LiteLLM when the matching key is present.
-- **`ollama/*`** — always-available local fallback.
+## How it works
 
-The subscription completion path has **no native function-calling**. To actually
-*act* on the Max plan, the `claude.code` skill delegates a full agentic Claude
-Code run — its own tools, MCP servers, and skills — that can read/write files
-and run commands. It defaults to `autonomous=true` (full-auto). Tiers default to
-`claude-code/sonnet`; edit `config.yaml` to change them.
+- **Router (`providers/router.py`)** walks task tiers top-to-bottom, skips unreachable backends, always ends at Ollama. `claude-code/*` shells out to the `claude` CLI with `--strict-mcp-config --setting-sources user` (cuts a ~2 minute cold start to ~4s).
+- **Six agents** (`chat`, `coding`, `hacking`, `automation`, `openclaw`, `hermes`) picked by keyword fast-path then a cheap classifier model. Force one with `--agent <name>`.
+- **OpenClaw desktop control** — Wayland (`wtype`/`grim`/`wl-copy`), X11 (`xdotool`/`scrot`/`xclip`), macOS built-ins; each skill self-detects and reports missing backends instead of failing silently.
+- **Wake-word voice loop** — energy-based VAD (records until you stop, not a timer), `faster-whisper` STT, edge-tts → piper → espeak TTS fallback chain.
+- **Autonomy gate** — `approval_required_for` in `config.yaml` hard-stops destructive shell (`shell.destructive`) and outbound sends (`net.send`) even in autonomous mode.
+
+## Screenshots
+
+| Terminal chat | Voice loop | Web dashboard | `jarvis doctor` |
+|---|---|---|---|
+| ![](assets/screenshot-1.png) | ![](assets/screenshot-2.png) | ![](assets/screenshot-3.png) | ![](assets/screenshot-4.png) |
 
 ## Interfaces
+
 ```bash
 jarvis chat              # interactive terminal (default)
 jarvis ask "fix the bug in app.py and run the tests"
@@ -88,28 +55,10 @@ jarvis web               # local dashboard at http://127.0.0.1:8787   (needs [we
 jarvis daemon            # scheduled/autonomous background jobs        (needs [daemon])
 jarvis voice             # "hey jarvis" voice loop                     (needs [voice] + mic)
 jarvis skills            # list every registered skill (incl. MCP tools)
-jarvis doctor            # capability report (see below)
+jarvis doctor            # capability report
 ```
 
-### Voice ("hey jarvis")
-`jarvis voice` runs a wake-word loop: it listens for the wake word (`jarvis`,
-configurable), then records your request using **energy-based voice-activity
-detection** (records until you stop talking, not a fixed timer), transcribes,
-answers, and speaks the reply.
-
-- **STT** — `faster-whisper` (model size configurable, default `base.en`).
-- **TTS** — layered backends, best first:
-  1. **edge-tts** — Microsoft neural voices, online, no model download (preferred).
-  2. **piper** — fully offline neural TTS (needs a downloaded `.onnx` voice).
-  3. **espeak / say** — system fallback.
-
-Inspired by the [openjarvis](https://github.com/lancejames221b/openjarvis)
-project. Needs the `[voice]` extra and a microphone; if either is absent it exits
-cleanly with a clear message and the other interfaces are unaffected.
-
 ## Agents
-The router tags each request — by a free keyword fast-path first, then a cheap
-classifier model — and dispatches to one agent. Force one with `--agent <name>`.
 
 | Agent | What it does |
 |-------|--------------|
@@ -120,9 +69,16 @@ classifier model — and dispatches to one agent. Force one with `--agent <name>
 | `openclaw` | Desktop operator — drives apps, browser, keyboard, screen, clipboard. |
 | `hermes` | Autonomous operator — chains desktop, browser, shell, code, and the `claude.code` delegate end-to-end. |
 
-## Desktop control (OpenClaw) & browser
-The **`computer`** skill category gives Jarvis hands on the machine, with
-cross-platform backends and graceful detection:
+## Providers & the Claude Max story
+
+- **`claude-code/*`** (e.g. `claude-code/sonnet`, `claude-code/haiku`) — routes through the `claude` CLI using your **Claude Max/Pro subscription** (OAuth, no API key). Runs as `claude -p --output-format json --strict-mcp-config --setting-sources user` — the last two flags cut cold start from minutes to ~4s.
+- **`claude-*`** (no prefix, e.g. `claude-sonnet-4-6`) — paid **Anthropic API** via LiteLLM, used only if `ANTHROPIC_API_KEY` is set.
+- **Everything else** (`openai/*`, `groq/*`, `gemini/*`, `deepseek/*`, …) — via LiteLLM when the matching key is present.
+- **`ollama/*`** — always-available local fallback.
+
+The subscription completion path has no native function-calling. To actually *act* on the Max plan, the `claude.code` skill delegates a full agentic Claude Code run — its own tools, MCP servers, and skills — that can read/write files and run commands.
+
+## Desktop control (OpenClaw)
 
 | Skill | Purpose |
 |-------|---------|
@@ -135,18 +91,10 @@ cross-platform backends and graceful detection:
 | `openclaw.click` | Move the mouse and click |
 | `openclaw.clipboard_set` / `openclaw.clipboard_get` | Read/write the clipboard |
 
-Backends are detected per session — **Wayland**: `wtype` / `grim` / `wl-copy`;
-**X11**: `xdotool` / `scrot` / `xclip`; **macOS**: built-ins. Each skill reports
-clearly if a backend is missing instead of failing silently.
-
-> **On this Wayland machine**, keyboard, screenshot, clipboard, app-launch, and
-> browser launch all work. **Mouse-click needs `ydotool`**
-> (`sudo pacman -S ydotool && systemctl --user enable --now ydotool`).
-
-For fine in-browser control (navigate, click, fill, snapshot) use the Playwright
-MCP server, surfaced via the MCP bridge as `mcp.playwright.*`.
+Backends detected per session — **Wayland**: `wtype` / `grim` / `wl-copy`; **X11**: `xdotool` / `scrot` / `xclip`; **macOS**: built-ins. Each skill reports clearly if a backend is missing instead of failing silently. For fine in-browser control (navigate, click, fill, snapshot) use the Playwright MCP server, surfaced via the MCP bridge as `mcp.playwright.*`.
 
 ## Architecture
+
 ```
 interfaces/{cli,web,daemon,voice_app}   thin frontends — no business logic
         │  build RequestContext
@@ -165,33 +113,20 @@ core/capabilities.py  probes OS/keys/audio/tools/desktop → everything self-dis
 ```
 
 ## Configuration
+
 - `config.yaml` — models, task tiers, autonomy mode, voice, web (non-secret).
 - `.env` — API keys only. Any subset; none required.
 - `~/.jarvis/` — SQLite DB + drop-in `plugins/*.py` (auto-loaded `@skill`s).
 
-## `jarvis doctor`
-Prints a capability report so you know what's live on the box, including:
-- `claude_code (Max/Pro plan)` — is the `claude` CLI present.
-- `cloud_providers` / `ollama` — which API providers and local fallback are up.
-- `voice_ready` — voice deps **and** a microphone present.
-- `desktop_control` — detected backends for keyboard / screenshot / mouse_click /
-  open_app / browser (and the session type, e.g. wayland/x11/macos).
-
-## Autonomy & safety
-Default mode is `autonomous` (chains tasks without asking). `approval_required_for`
-patterns in `config.yaml` are gated even so — destructive shell commands
-(`shell.destructive`) and outbound sends (`net.send`) are hard-stopped. The
-`claude.code` delegate defaults to autonomous (full-auto). Tool output is always
-treated as untrusted data, never executed as instructions. Use only against
-systems you're authorised to operate or test.
-
 ## Docker
+
 ```bash
 docker compose up --build         # jarvis (web) + ollama
 docker compose exec ollama ollama pull llama3.1
 ```
 
 ## Extend it
+
 Drop a file in `~/.jarvis/plugins/`:
 ```python
 from jarvis.skills import skill
@@ -201,4 +136,31 @@ from jarvis.skills import skill
 async def weather_now(city: str) -> str:
     ...
 ```
-It's available to the agents on next start.
+Available to agents on next start.
+
+## Stack
+
+Python 3.11+ · `anthropic` / LiteLLM · `faster-whisper` · `edge-tts` / `piper-tts` · `pyautogui` / `xdotool` / `wtype` · FastAPI (web) · APScheduler (daemon) · SQLite + FTS5 (memory) · MCP (Model Context Protocol) bridge · Playwright MCP · Docker + Compose.
+
+## Autonomy & safety
+
+Default mode is `autonomous` (chains tasks without asking). `approval_required_for` patterns in `config.yaml` are gated even so — destructive shell commands (`shell.destructive`) and outbound sends (`net.send`) are hard-stopped. Tool output is always treated as untrusted data, never executed as instructions. Use only against systems you're authorised to operate or test.
+
+## Contributing
+
+PRs welcome — the plugin surface is a single `@skill` decorator dropped in `~/.jarvis/plugins/`. New provider adapters go in `providers/` and only need a `complete()` method; the router picks them up on next start.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
+
+---
+
+### More from Danush
+
+- [ponytail-for-python](https://github.com/Danush-Aries/ponytail-for-python) — code intelligence for Python codebases
+- [Agentic_Systems](https://github.com/Danush-Aries/Agentic_Systems) — reference implementations of agent patterns
+- [autonomous-coding-agent](https://github.com/Danush-Aries/autonomous-coding-agent) — full-auto engineering agent
+- [computer-use-agent](https://github.com/Danush-Aries/computer-use-agent) — Claude drives your desktop via VNC
+- [browser-automation-agent](https://github.com/Danush-Aries/browser-automation-agent) — Claude drives Playwright
+- [blinkchat](https://github.com/Danush-Aries/blinkchat) — realtime chat with vibes
